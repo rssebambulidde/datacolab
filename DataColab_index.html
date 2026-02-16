@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DataColab — Python & SQL Notebook</title>
+<link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Roboto:wght@300;400;500&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
+<style>
+/* ── RESET & ROOT ─────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#fff;--bg2:#f8f9fa;--bg3:#f1f3f4;--bg4:#e8eaed;
+  --border:#e0e0e0;--border2:#dadce0;
+  --text:#202124;--text2:#5f6368;--text3:#80868b;
+  --blue:#1a73e8;--blue-bg:#e8f0fe;--blue-light:#d2e3fc;
+  --orange:#e8710a;--orange-bg:#fce8e6;
+  --green:#188038;--green-bg:#e6f4ea;
+  --purple:#8430ce;--purple-bg:#f3e8fd;
+  --red:#d93025;--yellow:#f9ab00;
+  --py-color:#188038;--py-bg:#e6f4ea;
+  --sql-color:#1a73e8;--sql-bg:#e8f0fe;
+  --md-color:#5f6368;--md-bg:#f1f3f4;
+  --ai-color:#8430ce;--ai-bg:#f3e8fd;
+  --cell-run:#f0f7ff;
+  --shadow:0 1px 3px rgba(60,64,67,.3),0 4px 8px rgba(60,64,67,.15);
+  --shadow-sm:0 1px 2px rgba(60,64,67,.3);
+  --font:'Google Sans','Roboto',sans-serif;
+  --font-mono:'Roboto Mono',monospace;
+  --hh:64px;--sbw:48px;--bph:220px;
+  --menu-h:40px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:var(--font);overflow:hidden;font-size:14px}
+
+/* ── TOP BAR ──────────────────────── */
+#topbar{
+  height:var(--hh);background:var(--bg);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 8px;gap:4px;flex-shrink:0;
+  position:relative;z-index:200;
+}
+.logo-area{display:flex;align-items:center;gap:10px;padding:0 8px;flex-shrink:0}
+.logo-icon{
+  width:36px;height:36px;background:linear-gradient(135deg,#f97316,#ea580c);
+  border-radius:8px;display:grid;place-items:center;font-size:20px;flex-shrink:0;
+  box-shadow:var(--shadow-sm);
+}
+.logo-text{font-size:1.1rem;font-weight:700;color:var(--text);letter-spacing:-.01em;white-space:nowrap}
+.logo-sub{font-size:.7rem;color:var(--text3);font-weight:400;margin-top:1px}
+
+.nb-meta{display:flex;flex-direction:column;flex:1;min-width:0;padding:0 8px}
+#nb-title{
+  background:none;border:none;font-size:.95rem;font-weight:500;color:var(--text);
+  outline:none;font-family:var(--font);width:100%;cursor:text;
+  border-bottom:1px solid transparent;transition:border-color .15s;padding:2px 0;
+}
+#nb-title:hover{border-bottom-color:var(--border2)}
+#nb-title:focus{border-bottom-color:var(--blue)}
+.nb-actions{display:flex;align-items:center;gap:4px;margin-top:2px}
+.nb-action-btn{
+  background:none;border:none;color:var(--text3);font-size:.7rem;font-family:var(--font);
+  cursor:pointer;padding:2px 4px;border-radius:4px;transition:color .12s,background .12s;
+  display:flex;align-items:center;gap:3px;
+}
+.nb-action-btn:hover{background:var(--bg3);color:var(--text)}
+
+.top-right{display:flex;align-items:center;gap:8px;flex-shrink:0;padding:0 8px}
+.ram-indicator{
+  display:flex;flex-direction:column;align-items:flex-end;gap:3px;padding:0 8px;cursor:pointer;
+}
+.ram-label{font-size:.65rem;color:var(--text3)}
+.ram-bar{width:80px;height:4px;background:var(--bg4);border-radius:2px;overflow:hidden}
+.ram-fill{height:100%;border-radius:2px;transition:width .5s}
+.ram-fill.py{background:var(--py-color);width:0%}
+.ram-fill.sql{background:var(--sql-color);width:0%}
+.connect-btn{
+  display:flex;align-items:center;gap:6px;background:var(--blue-bg);border:1px solid var(--blue-light);
+  border-radius:20px;padding:6px 14px;font-size:.8rem;font-weight:500;color:var(--blue);cursor:pointer;
+  transition:background .15s,box-shadow .15s;white-space:nowrap;font-family:var(--font);
+}
+.connect-btn:hover{background:var(--blue-light);box-shadow:var(--shadow-sm)}
+.connect-btn.connected{background:var(--green-bg);border-color:#a8d5b5;color:var(--green)}
+.kdot{width:8px;height:8px;border-radius:50%;background:var(--text3);flex-shrink:0;transition:all .3s}
+.kdot.ok{background:var(--green);box-shadow:0 0 6px rgba(24,128,56,.5)}
+.kdot.loading{background:var(--yellow);animation:blink .9s infinite}
+.kdot.err{background:var(--red)}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── MENU BAR ─────────────────────── */
+#menubar{
+  height:var(--menu-h);background:var(--bg);border-bottom:1px solid var(--border);
+  display:flex;align-items:center;padding:0 12px;gap:0;flex-shrink:0;
+}
+.menu-group{display:flex;align-items:center;gap:0}
+.menu-item{
+  background:none;border:none;color:var(--text2);font-size:.82rem;font-family:var(--font);
+  padding:6px 10px;border-radius:4px;cursor:pointer;transition:background .12s,color .12s;white-space:nowrap;
+}
+.menu-item:hover{background:var(--bg3);color:var(--text)}
+.menu-sep{width:1px;height:20px;background:var(--border2);margin:0 8px}
+
+.toolbar-group{display:flex;align-items:center;gap:6px;margin-left:8px}
+.tool-btn{
+  display:flex;align-items:center;gap:5px;background:none;border:1px solid var(--border2);
+  border-radius:20px;padding:5px 14px;font-size:.8rem;font-weight:500;color:var(--text2);
+  cursor:pointer;font-family:var(--font);transition:background .12s,border-color .12s,color .12s;white-space:nowrap;
+}
+.tool-btn:hover{background:var(--bg3);border-color:var(--text3);color:var(--text)}
+.tool-btn svg{width:14px;height:14px;flex-shrink:0}
+.tool-btn.primary{background:var(--bg);border-color:var(--border2)}
+
+.run-all-btn{
+  display:flex;align-items:center;gap:6px;background:none;border:none;
+  color:var(--text2);font-size:.82rem;font-family:var(--font);padding:5px 10px;
+  border-radius:20px;cursor:pointer;transition:background .12s;
+}
+.run-all-btn:hover{background:var(--bg3);color:var(--text)}
+.ml-auto{margin-left:auto}
+
+/* ── LAYOUT ───────────────────────── */
+#layout{
+  display:flex;
+  height:calc(100vh - var(--hh) - var(--menu-h));
+  overflow:hidden;
+}
+
+/* ── LEFT ICON SIDEBAR ────────────── */
+#sidebar{
+  width:var(--sbw);flex-shrink:0;background:var(--bg);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:2px;overflow:hidden;
+}
+.sb-icon-btn{
+  width:36px;height:36px;border-radius:8px;display:grid;place-items:center;cursor:pointer;
+  background:none;border:none;color:var(--text3);font-size:18px;transition:background .12s,color .12s;
+  position:relative;
+}
+.sb-icon-btn:hover,.sb-icon-btn.active{background:var(--bg3);color:var(--blue)}
+.sb-icon-btn[title]:hover::after{
+  content:attr(title);position:absolute;left:calc(100% + 8px);top:50%;transform:translateY(-50%);
+  background:var(--text);color:#fff;font-size:.72rem;border-radius:4px;padding:3px 8px;
+  white-space:nowrap;pointer-events:none;z-index:999;font-family:var(--font);
+}
+.sb-sep{width:30px;height:1px;background:var(--border);margin:4px 0}
+
+/* ── SIDE PANEL ───────────────────── */
+#side-panel{
+  width:0;flex-shrink:0;background:var(--bg);border-right:1px solid var(--border);
+  overflow:hidden;transition:width .2s;display:flex;flex-direction:column;
+}
+#side-panel.open{width:260px}
+.panel-head{
+  display:flex;align-items:center;justify-content:space-between;padding:12px 16px;
+  border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.panel-title{font-size:.82rem;font-weight:500;color:var(--text)}
+.panel-close{background:none;border:none;color:var(--text3);cursor:pointer;font-size:1rem;border-radius:4px;width:22px;height:22px;display:grid;place-items:center}
+.panel-close:hover{background:var(--bg3);color:var(--text)}
+.panel-body{flex:1;overflow-y:auto;padding:8px 0}
+.panel-body::-webkit-scrollbar{width:6px}
+.panel-body::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+.panel-section{padding:6px 16px 2px;font-size:.68rem;font-weight:500;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)}
+.panel-item{
+  display:flex;align-items:center;gap:8px;padding:6px 16px;font-size:.8rem;color:var(--text2);
+  cursor:pointer;transition:background .1s;border-radius:0;
+}
+.panel-item:hover{background:var(--bg3);color:var(--text)}
+.panel-badge{
+  font-size:.65rem;font-weight:500;border-radius:4px;padding:1px 6px;flex-shrink:0;font-family:var(--font-mono);
+}
+.panel-badge.py{background:var(--py-bg);color:var(--py-color)}
+.panel-badge.sql{background:var(--sql-bg);color:var(--sql-color)}
+.panel-snip{
+  font-size:.75rem;font-family:var(--font-mono);color:var(--text3);padding:4px 16px 4px 36px;
+  cursor:pointer;border-left:0;transition:color .1s,background .1s;line-height:1.5;
+}
+.panel-snip:hover{background:var(--bg3);color:var(--blue)}
+
+/* Variable explorer */
+.var-row{display:flex;align-items:center;gap:8px;padding:5px 16px;font-size:.75rem;border-bottom:1px solid var(--border);cursor:default}
+.var-row:hover{background:var(--bg2)}
+.var-name{font-family:var(--font-mono);color:var(--blue);font-weight:500;min-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.var-type{color:var(--text3);background:var(--bg3);border-radius:3px;padding:1px 5px;font-size:.67rem;font-family:var(--font-mono);flex-shrink:0}
+.var-val{color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;font-family:var(--font-mono);font-size:.72rem}
+
+/* Exercises */
+.ex-item{border-bottom:1px solid var(--border);padding:10px 16px;cursor:pointer;transition:background .1s}
+.ex-item:hover{background:var(--bg2)}
+.ex-item-head{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.ex-num{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--border2);display:grid;place-items:center;font-size:.65rem;font-weight:700;color:var(--text3);flex-shrink:0}
+.ex-num.done{border-color:var(--green);color:var(--green);background:var(--green-bg)}
+.ex-title2{font-size:.8rem;font-weight:500;color:var(--text);flex:1}
+.ex-diff{font-size:.62rem;border-radius:4px;padding:1px 6px;flex-shrink:0}
+.ex-diff.easy{background:var(--green-bg);color:var(--green)}
+.ex-diff.med{background:#fff8e1;color:#f57f17}
+.ex-diff.hard{background:var(--orange-bg);color:var(--red)}
+.ex-desc2{font-size:.75rem;color:var(--text2);line-height:1.5;margin-bottom:8px;padding-left:28px}
+.ex-btns{display:flex;gap:6px;padding-left:28px}
+.ex-btn2{background:none;border:1px solid var(--border2);border-radius:12px;padding:3px 10px;font-size:.72rem;color:var(--text2);cursor:pointer;font-family:var(--font);transition:background .1s,border-color .1s}
+.ex-btn2:hover{background:var(--bg3);border-color:var(--text3)}
+.ex-btn2.primary{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.ex-btn2.primary:hover{background:var(--blue-light)}
+.hint-txt{font-size:.74rem;color:var(--orange);background:#fff3e0;border-radius:6px;padding:6px 10px;margin:6px 0 4px 28px;display:none;line-height:1.5;font-family:var(--font-mono)}
+.hint-txt.show{display:block}
+
+/* ── CANVAS ───────────────────────── */
+#canvas{
+  flex:1;overflow-y:auto;background:var(--bg);
+  padding:24px 0;position:relative;
+}
+#canvas::-webkit-scrollbar{width:8px}
+#canvas::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:4px}
+#cells-wrap{max-width:860px;margin:0 auto;padding:0 48px 80px;display:flex;flex-direction:column;gap:0}
+
+/* ── CELL ─────────────────────────── */
+.cell{
+  position:relative;border:1px solid transparent;border-radius:8px;
+  transition:border-color .15s,background .15s;margin-bottom:2px;
+}
+.cell:hover,.cell.focused{border-color:var(--border2);background:var(--bg);}
+.cell.focused{border-color:var(--blue)!important;box-shadow:0 0 0 1px var(--blue-light)}
+.cell.running{border-color:var(--orange)!important}
+.cell.py-cell{--cell-color:var(--py-color);--cell-bg:var(--py-bg)}
+.cell.sql-cell{--cell-color:var(--sql-color);--cell-bg:var(--sql-bg)}
+.cell.md-cell{--cell-color:var(--md-color);--cell-bg:var(--md-bg)}
+
+.cell-gutter{
+  position:absolute;left:-48px;top:0;width:48px;height:100%;
+  display:flex;flex-direction:column;align-items:center;padding-top:6px;gap:2px;
+}
+.run-btn{
+  width:28px;height:28px;border-radius:50%;border:none;background:none;cursor:pointer;
+  display:grid;place-items:center;color:var(--text3);transition:color .12s,background .12s;flex-shrink:0;
+}
+.run-btn:hover{color:var(--cell-color);background:var(--cell-bg)}
+.run-btn svg{width:16px;height:16px}
+.cell-num{font-size:.68rem;color:var(--text3);font-family:var(--font-mono)}
+
+.cell-toolbar{
+  display:flex;align-items:center;gap:4px;position:absolute;right:4px;top:4px;
+  opacity:0;transition:opacity .15s;background:var(--bg);border-radius:6px;padding:2px;
+  box-shadow:var(--shadow-sm);
+}
+.cell:hover .cell-toolbar,.cell.focused .cell-toolbar{opacity:1}
+.ct-btn{
+  background:none;border:none;color:var(--text3);cursor:pointer;border-radius:4px;
+  width:24px;height:24px;display:grid;place-items:center;font-size:.78rem;
+  transition:background .1s,color .1s;
+}
+.ct-btn:hover{background:var(--bg3);color:var(--text)}
+.ct-btn.danger:hover{color:var(--red)}
+
+/* Cell type badge */
+.cell-badge{
+  display:inline-flex;align-items:center;gap:4px;font-size:.64rem;font-weight:500;
+  color:var(--cell-color);background:var(--cell-bg);border-radius:4px;padding:1px 6px;
+  font-family:var(--font);margin:6px 12px 0 12px;
+}
+.exec-time{font-size:.65rem;color:var(--text3);font-family:var(--font-mono);margin-left:4px}
+
+/* CodeMirror overrides */
+.CodeMirror{
+  font-family:var(--font-mono)!important;font-size:.855rem!important;line-height:1.7!important;
+  background:transparent!important;color:#202124!important;height:auto!important;min-height:40px;
+  border:none!important;
+}
+.CodeMirror-scroll{overflow-x:auto!important;overflow-y:hidden!important}
+.CodeMirror-lines{padding:8px 12px 10px 6px!important}
+.CodeMirror-gutters{background:transparent!important;border-right:1px solid var(--border)!important;width:36px}
+.CodeMirror-linenumber{color:var(--text3)!important;font-size:.72rem;padding:0 6px!important}
+.CodeMirror-cursor{border-color:var(--text)!important}
+.CodeMirror-selected{background:var(--blue-light)!important}
+.CodeMirror-focused .CodeMirror-selected{background:var(--blue-light)!important}
+
+/* Syntax highlighting - light theme */
+.cm-keyword{color:#9334e6!important}
+.cm-def{color:#1967d2!important}
+.cm-string{color:#188038!important}
+.cm-number{color:#b06000!important}
+.cm-comment{color:#80868b!important;font-style:italic}
+.cm-operator{color:#c5221f!important}
+.cm-builtin{color:#1967d2!important}
+.cm-variable{color:#202124!important}
+.cm-atom{color:#b06000!important}
+.cm-tag{color:#c5221f!important}
+.cm-attribute{color:#1967d2!important}
+
+/* Markdown rendered */
+.md-view{padding:10px 48px 12px 48px;min-height:40px;cursor:pointer;line-height:1.7;color:var(--text)}
+.md-view h1{font-size:1.5rem;font-weight:700;color:var(--text);margin:.5em 0 .3em;border-bottom:1px solid var(--border);padding-bottom:.2em}
+.md-view h2{font-size:1.15rem;font-weight:600;color:var(--text);margin:.5em 0 .2em}
+.md-view h3{font-size:.95rem;font-weight:600;margin:.4em 0 .2em}
+.md-view p{margin-bottom:.5em;font-size:.88rem}
+.md-view code{font-family:var(--font-mono);background:var(--bg3);border-radius:3px;padding:1px 5px;font-size:.82em;color:var(--blue)}
+.md-view pre{background:var(--bg3);border-radius:6px;padding:10px 12px;margin:.5em 0;overflow-x:auto}
+.md-view pre code{background:none;padding:0}
+.md-view ul,.md-view ol{padding-left:1.5em;margin-bottom:.5em;font-size:.88rem}
+.md-view blockquote{border-left:3px solid var(--blue);padding-left:12px;color:var(--text2);margin:.4em 0}
+.md-view strong{font-weight:600}
+.md-edit-hint{font-size:.68rem;color:var(--text3);padding:0 48px 8px;font-family:var(--font-mono);display:none}
+.cell.md-cell:hover .md-edit-hint{display:block}
+
+/* Output */
+.cell-out{
+  border-top:1px solid var(--border);background:var(--bg);
+  max-height:400px;overflow-y:auto;
+}
+.cell-out.hidden{display:none}
+.cell-out::-webkit-scrollbar{width:5px;height:5px}
+.cell-out::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+.out-line{
+  font-family:var(--font-mono);font-size:.815rem;line-height:1.6;
+  padding:0 12px 0 48px;white-space:pre-wrap;word-break:break-all;
+}
+.out-line:first-child{padding-top:8px}
+.out-line:last-child:not(.tbl-out){padding-bottom:10px}
+.out-line.stdout{color:#202124}
+.out-line.stderr{color:var(--red)}
+.out-line.info{color:var(--text3);font-style:italic}
+
+/* Table output */
+.tbl-out{padding:8px 16px 10px 48px;overflow-x:auto}
+.sql-tbl{border-collapse:collapse;font-family:var(--font-mono);font-size:.78rem;min-width:max-content}
+.sql-tbl th{background:var(--bg3);color:var(--text);border:1px solid var(--border);padding:5px 14px;font-weight:500;text-align:left;white-space:nowrap}
+.sql-tbl td{border:1px solid var(--border);padding:4px 14px;color:var(--text2);white-space:nowrap}
+.sql-tbl tr:hover td{background:var(--bg2)}
+.tbl-meta2{font-size:.7rem;color:var(--text3);padding:4px 16px 4px 48px;display:flex;align-items:center;gap:10px}
+.exp-btn{background:none;border:1px solid var(--border2);border-radius:10px;padding:2px 8px;font-size:.67rem;color:var(--blue);cursor:pointer;font-family:var(--font);transition:background .1s}
+.exp-btn:hover{background:var(--blue-bg)}
+
+/* Chart */
+.chart-out{padding:14px 16px 14px 48px;background:var(--bg)}
+.chart-title2{font-size:.8rem;font-weight:500;color:var(--text2);margin-bottom:10px}
+.chart-out canvas{max-height:280px!important}
+
+/* Add cell strip */
+.add-strip{
+  display:flex;align-items:center;opacity:0;transition:opacity .15s;
+  margin-left:-8px;padding:4px 0;
+}
+.add-strip:hover{opacity:1!important}
+#cells-wrap:hover .add-strip:last-child{opacity:.6}
+.add-strip:hover{opacity:1}
+.add-line2{flex:1;height:1px;background:var(--border)}
+.add-chip{
+  display:flex;align-items:center;gap:4px;background:var(--bg);border:1px solid var(--border2);
+  border-radius:16px;padding:3px 12px;font-size:.75rem;color:var(--text2);cursor:pointer;
+  font-family:var(--font);transition:border-color .12s,color .12s,background .12s;white-space:nowrap;
+}
+.add-chip:hover{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.add-chip.sql:hover{border-color:var(--sql-color);color:var(--sql-color);background:var(--sql-bg)}
+.add-chip.md:hover{border-color:var(--text2);color:var(--text);background:var(--bg3)}
+
+/* ── BOTTOM PANEL ─────────────────── */
+#bottom-area{
+  flex-shrink:0;background:var(--bg);border-top:1px solid var(--border);
+  display:flex;flex-direction:column;height:var(--bph);transition:height .2s;
+}
+#bottom-tabs{
+  display:flex;align-items:center;border-bottom:1px solid var(--border);
+  padding:0 12px;height:36px;gap:0;flex-shrink:0;
+}
+.btab{
+  display:flex;align-items:center;gap:5px;padding:0 12px;height:100%;font-size:.8rem;color:var(--text2);
+  cursor:pointer;border-bottom:2px solid transparent;transition:color .12s;
+}
+.btab:hover{color:var(--text)}
+.btab.active{color:var(--blue);border-bottom-color:var(--blue);font-weight:500}
+.btab-close{margin-left:4px;opacity:.5;font-size:.7rem}
+.btab-close:hover{opacity:1}
+.bottom-spacer{flex:1}
+.btab-action{background:none;border:none;color:var(--text3);cursor:pointer;font-size:.75rem;padding:2px 8px;border-radius:4px;font-family:var(--font)}
+.btab-action:hover{background:var(--bg3);color:var(--text)}
+#bottom-content{flex:1;overflow:hidden;display:flex}
+.bpanel{display:none;flex:1;overflow-y:auto;padding:8px 0}
+.bpanel.active{display:block}
+
+/* AI Panel */
+#ai-panel{display:none;flex-direction:column;flex:1}
+#ai-panel.active{display:flex}
+#ai-msgs{flex:1;overflow-y:auto;padding:8px 16px;display:flex;flex-direction:column;gap:8px}
+#ai-msgs::-webkit-scrollbar{width:5px}
+#ai-msgs::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+.ai-bubble{padding:8px 12px;border-radius:8px;font-size:.8rem;line-height:1.6;max-width:90%}
+.ai-bubble.user{background:var(--blue-bg);color:var(--text);align-self:flex-end;max-width:80%}
+.ai-bubble.bot{background:var(--bg3);color:var(--text);border:1px solid var(--border2)}
+.ai-bubble.bot code{font-family:var(--font-mono);background:var(--bg);border-radius:3px;padding:1px 4px;font-size:.78em;color:var(--blue)}
+.ai-bubble.thinking{color:var(--text3);font-style:italic;padding:4px 12px}
+.ai-input-row{display:flex;gap:8px;padding:8px 12px;border-top:1px solid var(--border);flex-shrink:0;align-items:flex-end}
+#ai-input{
+  flex:1;border:1px solid var(--border2);border-radius:20px;padding:7px 14px;
+  font-family:var(--font);font-size:.8rem;color:var(--text);outline:none;resize:none;
+  max-height:80px;overflow-y:auto;transition:border-color .15s;background:var(--bg);
+}
+#ai-input:focus{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-light)}
+#ai-send-btn{
+  background:var(--blue);border:none;border-radius:50%;width:32px;height:32px;
+  display:grid;place-items:center;cursor:pointer;transition:opacity .15s;flex-shrink:0;
+}
+#ai-send-btn:hover{opacity:.88}
+#ai-send-btn:disabled{background:var(--bg4);cursor:not-allowed}
+#ai-send-btn svg{width:15px;height:15px;fill:white}
+.ai-ctx{display:flex;gap:6px;padding:4px 12px 0;flex-wrap:wrap}
+.ai-ctx-chip{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:12px;
+  padding:3px 10px;font-size:.7rem;color:var(--text2);cursor:pointer;
+  transition:border-color .12s,color .12s;font-family:var(--font);
+}
+.ai-ctx-chip:hover{border-color:var(--purple);color:var(--purple);background:var(--purple-bg)}
+
+/* Resize handle */
+#resize-handle{
+  height:5px;background:transparent;cursor:ns-resize;flex-shrink:0;
+  transition:background .15s;
+}
+#resize-handle:hover{background:var(--blue-light)}
+
+/* ── TOAST ────────────────────────── */
+#toast{
+  position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(10px);
+  background:var(--text);color:#fff;border-radius:6px;padding:8px 18px;
+  font-size:.8rem;opacity:0;transition:all .22s;z-index:9999;pointer-events:none;
+  white-space:nowrap;
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Upload modal */
+#upload-modal{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;
+  display:none;align-items:center;justify-content:center;
+}
+#upload-modal.show{display:flex}
+.modal-box{
+  background:var(--bg);border-radius:12px;box-shadow:var(--shadow);
+  padding:24px;width:400px;display:flex;flex-direction:column;gap:14px;
+}
+.modal-title{font-size:1rem;font-weight:600;color:var(--text)}
+.drop-zone2{
+  border:2px dashed var(--border2);border-radius:8px;padding:28px;text-align:center;
+  color:var(--text2);font-size:.85rem;cursor:pointer;transition:border-color .2s;
+}
+.drop-zone2:hover{border-color:var(--blue);color:var(--blue)}
+.drop-zone2 input{display:none}
+.modal-preview{font-family:var(--font-mono);font-size:.72rem;color:var(--text2);background:var(--bg3);border-radius:6px;padding:8px 10px;max-height:100px;overflow-y:auto;display:none}
+.modal-opts{display:flex;gap:8px}
+.modal-opt{
+  flex:1;border:1px solid var(--border2);border-radius:8px;padding:8px 12px;font-size:.78rem;
+  color:var(--text2);cursor:pointer;text-align:center;transition:border-color .12s,background .12s;
+}
+.modal-opt.sel{border-color:var(--blue);color:var(--blue);background:var(--blue-bg)}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end}
+.modal-btn{background:none;border:1px solid var(--border2);border-radius:6px;padding:7px 18px;font-size:.8rem;font-family:var(--font);cursor:pointer;color:var(--text2)}
+.modal-btn:hover{background:var(--bg3)}
+.modal-btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.modal-btn.primary:hover{background:#1557b0}
+.modal-btn.primary:disabled{background:var(--bg4);border-color:var(--bg4);cursor:not-allowed}
+
+/* Shortcuts overlay */
+#shortcuts-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;
+  display:none;align-items:center;justify-content:center;
+}
+#shortcuts-overlay.show{display:flex}
+.shortcuts-box{
+  background:var(--bg);border-radius:12px;box-shadow:var(--shadow);
+  padding:24px;width:480px;max-height:80vh;overflow-y:auto;
+}
+.sh-title{font-size:1rem;font-weight:600;margin-bottom:16px;color:var(--text)}
+.sh-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:.82rem}
+.sh-key{display:flex;gap:4px}
+kbd{background:var(--bg3);border:1px solid var(--border2);border-radius:4px;padding:2px 7px;font-family:var(--font-mono);font-size:.72rem;color:var(--text)}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div class="logo-area">
+    <div class="logo-icon">🗒️</div>
+    <div>
+      <div class="logo-text">DataColab</div>
+      <div class="logo-sub">Python · SQL · Data Engineering</div>
+    </div>
+  </div>
+
+  <div class="nb-meta">
+    <input type="text" id="nb-title" value="Untitled Notebook" spellcheck="false">
+    <div class="nb-actions">
+      <button class="nb-action-btn" onclick="saveNotebook()">💾 File</button>
+      <button class="nb-action-btn" onclick="document.getElementById('upload-modal').classList.add('show')">📁 Upload CSV</button>
+      <button class="nb-action-btn" onclick="document.getElementById('shortcuts-overlay').classList.add('show')">⌨️ Shortcuts</button>
+    </div>
+  </div>
+
+  <div class="top-right">
+    <div class="ram-indicator" title="Kernel status">
+      <div class="ram-label">Python <span id="py-st-txt">loading...</span></div>
+      <div class="ram-bar"><div class="ram-fill py" id="py-bar"></div></div>
+      <div class="ram-label">SQL <span id="sql-st-txt">loading...</span></div>
+      <div class="ram-bar"><div class="ram-fill sql" id="sql-bar"></div></div>
+    </div>
+    <div class="connect-btn" id="connect-btn">
+      <div class="kdot loading" id="kdot"></div>
+      <span id="connect-txt">Connecting</span>
+    </div>
+  </div>
+</div>
+
+<!-- MENU BAR -->
+<div id="menubar">
+  <div class="menu-group">
+    <button class="menu-item" onclick="addCell('python')">+ Code</button>
+    <button class="menu-item" onclick="addCell('markdown')">+ Text</button>
+    <div class="menu-sep"></div>
+    <button class="menu-item" onclick="runAll()">▷ Run all</button>
+    <div class="menu-sep"></div>
+    <button class="menu-item" onclick="clearOutputs()">Clear outputs</button>
+    <button class="menu-item" onclick="saveNotebook()">Download</button>
+    <label class="menu-item" style="cursor:pointer">Upload .ipynb<input type="file" accept=".json,.ipynb" style="display:none" onchange="loadNotebook(event)"></label>
+  </div>
+  <div class="ml-auto" style="display:flex;align-items:center;gap:8px">
+    <button class="tool-btn" onclick="toggleAI()">🤖 AI Tutor</button>
+    <button class="tool-btn" onclick="openSidePanel('snippets')">Snippets</button>
+    <button class="tool-btn" onclick="openSidePanel('exercises')">Exercises</button>
+  </div>
+</div>
+
+<div id="layout">
+  <!-- ICON SIDEBAR -->
+  <div id="sidebar">
+    <button class="sb-icon-btn" title="Table of contents" onclick="openSidePanel('toc')">☰</button>
+    <button class="sb-icon-btn" title="Search" onclick="openSidePanel('search')">🔍</button>
+    <button class="sb-icon-btn" title="Code snippets" onclick="openSidePanel('snippets')">{ }</button>
+    <div class="sb-sep"></div>
+    <button class="sb-icon-btn" title="Variable explorer" onclick="openSidePanel('vars')">𝑥</button>
+    <button class="sb-icon-btn" title="Secrets & env" onclick="openSidePanel('secrets')">🔑</button>
+    <button class="sb-icon-btn" title="Files" onclick="openSidePanel('files')">📁</button>
+    <div class="sb-sep"></div>
+    <button class="sb-icon-btn" title="Exercises" onclick="openSidePanel('exercises')">📝</button>
+  </div>
+
+  <!-- SIDE PANEL -->
+  <div id="side-panel">
+    <!-- Snippets -->
+    <div id="sp-snippets" style="display:none;flex-direction:column;height:100%">
+      <div class="panel-head"><span class="panel-title">Snippets</span><button class="panel-close" onclick="closeSidePanel()">✕</button></div>
+      <div class="panel-body">
+        <div class="panel-section">Python</div>
+        <div class="panel-item" onclick="insertSnip('py-vars')"><span class="panel-badge py">Py</span>Variables & Types</div>
+        <div class="panel-snip" onclick="insertSnip('py-list')">Lists & Loops</div>
+        <div class="panel-snip" onclick="insertSnip('py-dict')">Dictionaries</div>
+        <div class="panel-snip" onclick="insertSnip('py-func')">Functions</div>
+        <div class="panel-snip" onclick="insertSnip('py-grade')">Grade Tracker</div>
+        <div class="panel-snip" onclick="insertSnip('py-chart-bar')">📊 Bar Chart</div>
+        <div class="panel-snip" onclick="insertSnip('py-chart-line')">📈 Line Chart</div>
+        <div class="panel-snip" onclick="insertSnip('py-csv')">Explore CSV</div>
+        <div class="panel-section" style="margin-top:8px">SQL</div>
+        <div class="panel-item" onclick="insertSnip('sql-create')"><span class="panel-badge sql">SQL</span>CREATE TABLE</div>
+        <div class="panel-snip sql" onclick="insertSnip('sql-insert')">INSERT rows</div>
+        <div class="panel-snip sql" onclick="insertSnip('sql-select')">SELECT query</div>
+        <div class="panel-snip sql" onclick="insertSnip('sql-where')">WHERE filter</div>
+        <div class="panel-snip sql" onclick="insertSnip('sql-aggr')">Aggregations</div>
+        <div class="panel-snip sql" onclick="insertSnip('sql-join')">JOIN tables</div>
+      </div>
+    </div>
+    <!-- Variables -->
+    <div id="sp-vars" style="display:none;flex-direction:column;height:100%">
+      <div class="panel-head">
+        <span class="panel-title">Variable Explorer</span>
+        <div style="display:flex;gap:6px">
+          <button class="panel-close" onclick="refreshVars()" title="Refresh" style="font-size:.75rem">↻</button>
+          <button class="panel-close" onclick="closeSidePanel()">✕</button>
+        </div>
+      </div>
+      <div class="panel-body" id="vars-list"><div style="padding:16px;font-size:.8rem;color:var(--text3);text-align:center">Run a Python cell to see variables</div></div>
+    </div>
+    <!-- Exercises -->
+    <div id="sp-exercises" style="display:none;flex-direction:column;height:100%">
+      <div class="panel-head"><span class="panel-title">Exercises</span><button class="panel-close" onclick="closeSidePanel()">✕</button></div>
+      <div class="panel-body" id="ex-list2"></div>
+    </div>
+    <!-- TOC placeholder -->
+    <div id="sp-toc" style="display:none;flex-direction:column;height:100%">
+      <div class="panel-head"><span class="panel-title">Table of Contents</span><button class="panel-close" onclick="closeSidePanel()">✕</button></div>
+      <div class="panel-body" id="toc-list"></div>
+    </div>
+  </div>
+
+  <!-- MAIN CANVAS -->
+  <div id="canvas">
+    <div id="cells-wrap"></div>
+  </div>
+</div>
+
+<!-- BOTTOM PANEL (Resize) -->
+<div id="resize-handle" id="rh"></div>
+<div id="bottom-area">
+  <div id="bottom-tabs">
+    <div class="btab active" onclick="switchBTab('ai',this)" id="btab-ai">🤖 AI Tutor</div>
+    <div class="btab" onclick="switchBTab('term',this)" id="btab-term">⬛ Terminal</div>
+    <div class="btab" onclick="switchBTab('vars2',this)" id="btab-vars2">{ } Variables</div>
+    <div class="bottom-spacer"></div>
+    <button class="btab-action" onclick="toggleBottomPanel()">▾ Minimise</button>
+  </div>
+  <div id="bottom-content">
+    <!-- AI Panel -->
+    <div id="ai-panel" class="active">
+      <div class="ai-ctx">
+        <div class="ai-ctx-chip" onclick="sendCellCtx()">📋 Ask about current cell</div>
+        <div class="ai-ctx-chip" onclick="askAI('Explain what a for loop is in Python')">For loops?</div>
+        <div class="ai-ctx-chip" onclick="askAI('What is the difference between Python and SQL?')">Python vs SQL?</div>
+        <div class="ai-ctx-chip" onclick="askAI('What is data engineering?')">Data Engineering?</div>
+      </div>
+      <div id="ai-msgs">
+        <div class="ai-bubble bot">👋 Hi! I'm your AI tutor for Python, SQL, and Data Engineering. Ask me anything — I'll guide you step by step. What would you like to learn today? 😊</div>
+      </div>
+      <div class="ai-input-row">
+        <textarea id="ai-input" placeholder="Ask anything..." rows="1" onkeydown="aiKeydown(event)"></textarea>
+        <button id="ai-send-btn" onclick="sendAIMsg()">
+          <svg viewBox="0 0 24 24"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
+        </button>
+      </div>
+    </div>
+    <!-- Terminal -->
+    <div id="term-panel" style="display:none;flex:1;overflow-y:auto;padding:10px 16px;font-family:var(--font-mono);font-size:.82rem;color:#202124;background:var(--bg2)">
+      <div style="color:var(--text3)">DataColab Terminal — Python & SQL execution environment</div>
+      <div style="color:var(--text3)">Type in cells above and press Shift+Enter to run.</div>
+    </div>
+    <!-- Variables mini -->
+    <div id="vars2-panel" style="display:none;flex:1;overflow-y:auto">
+      <div id="vars2-list" style="padding:4px 0"><div style="padding:12px 16px;font-size:.8rem;color:var(--text3)">Run Python cells to populate the variable explorer.</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div id="upload-modal">
+  <div class="modal-box">
+    <div class="modal-title">📁 Upload CSV / TSV File</div>
+    <div class="drop-zone2" onclick="document.getElementById('csv-input').click()" ondragover="e=>e.preventDefault()" ondrop="handleDrop(event)">
+      <input type="file" id="csv-input" accept=".csv,.tsv" onchange="handleFileSelect(event)">
+      <div style="font-size:1.5rem;margin-bottom:8px">📂</div>
+      <div>Drop your file here or click to browse</div>
+      <div style="font-size:.72rem;color:var(--text3);margin-top:4px">Supports .csv and .tsv</div>
+    </div>
+    <div class="modal-preview" id="modal-preview"></div>
+    <div style="font-size:.78rem;font-weight:500;color:var(--text2)">Import into:</div>
+    <div class="modal-opts">
+      <div class="modal-opt sel" id="opt-py2" onclick="this.classList.toggle('sel')">🐍 Python variable</div>
+      <div class="modal-opt sel" id="opt-sql2" onclick="this.classList.toggle('sel')">🗄️ SQL table</div>
+    </div>
+    <div class="modal-footer">
+      <button class="modal-btn" onclick="document.getElementById('upload-modal').classList.remove('show')">Cancel</button>
+      <button class="modal-btn primary" id="import-btn" onclick="importFile()" disabled>Import</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHORTCUTS -->
+<div id="shortcuts-overlay" onclick="this.classList.remove('show')">
+  <div class="shortcuts-box" onclick="event.stopPropagation()">
+    <div class="sh-title">⌨️ Keyboard Shortcuts</div>
+    <div class="sh-row"><span>Run cell</span><div class="sh-key"><kbd>Shift</kbd><kbd>Enter</kbd></div></div>
+    <div class="sh-row"><span>Run and insert below</span><div class="sh-key"><kbd>Alt</kbd><kbd>Enter</kbd></div></div>
+    <div class="sh-row"><span>Add Python cell</span><div class="sh-key"><kbd>Ctrl</kbd><kbd>B</kbd></div></div>
+    <div class="sh-row"><span>Add SQL cell</span><div class="sh-key"><kbd>Ctrl</kbd><kbd>Q</kbd></div></div>
+    <div class="sh-row"><span>Add Markdown cell</span><div class="sh-key"><kbd>Ctrl</kbd><kbd>M</kbd></div></div>
+    <div class="sh-row"><span>Toggle AI Tutor</span><div class="sh-key"><kbd>Ctrl</kbd><kbd>K</kbd></div></div>
+    <div class="sh-row"><span>Save notebook</span><div class="sh-key"><kbd>Ctrl</kbd><kbd>S</kbd></div></div>
+    <div class="sh-row"><span>Delete cell</span><div class="sh-key"><kbd>Ctrl</kbd><kbd>Delete</kbd></div></div>
+    <button class="modal-btn" style="margin-top:16px;float:right" onclick="document.getElementById('shortcuts-overlay').classList.remove('show')">Close</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/python/python.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/sql/sql.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/markdown/markdown.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/closebrackets.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/addon/edit/matchbrackets.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/sql-wasm.js"></script>
+<script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+
+<script>
+// ══════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════
+let pyodide=null,sqlDB=null;
+let cells=[]; // {id,type,cm,execCount,lastTime,_content,_rendered,_outHTML}
+let activeCellId=null;
+let execN=0,totalExec=0;
+let csvData=null,csvName='';
+let bottomMinimised=false;
+let bphDefault=220;
+let aiHistory=[];
+
+// ══════════════════════════════════════════
+//  KERNELS
+// ══════════════════════════════════════════
+async function initPython(){
+  try{
+    pyodide=await loadPyodide();
+    await pyodide.runPythonAsync(`
+import sys,io,builtins
+def bar_chart(labels,values,title="Bar Chart",xlabel="",ylabel=""):
+    import json as _j
+    print("__CHART__:"+_j.dumps({"type":"bar","labels":list(labels),"values":list(values),"title":title,"xlabel":xlabel,"ylabel":ylabel}))
+def line_chart(labels,values,title="Line Chart",xlabel="",ylabel=""):
+    import json as _j
+    print("__CHART__:"+_j.dumps({"type":"line","labels":list(labels),"values":list(values),"title":title,"xlabel":xlabel,"ylabel":ylabel}))
+def pie_chart(labels,values,title="Pie Chart"):
+    import json as _j
+    print("__CHART__:"+_j.dumps({"type":"pie","labels":list(labels),"values":list(values),"title":title}))
+def scatter_chart(x,y,title="Scatter",xlabel="x",ylabel="y"):
+    import json as _j
+    print("__CHART__:"+_j.dumps({"type":"scatter","x":list(x),"y":list(y),"title":title,"xlabel":xlabel,"ylabel":ylabel}))
+`);
+    document.getElementById('kdot').className='kdot ok';
+    document.getElementById('connect-txt').textContent='Connected';
+    document.getElementById('connect-btn').classList.add('connected');
+    document.getElementById('py-st-txt').textContent='ready';
+    animBar('py-bar',45);
+    toast('🐍 Python ready');
+  }catch(e){
+    document.getElementById('kdot').className='kdot err';
+    document.getElementById('connect-txt').textContent='Error';
+    document.getElementById('py-st-txt').textContent='error';
+  }
+}
+
+async function initSQL(){
+  try{
+    const SQL=await initSqlJs({locateFile:f=>`https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.2/${f}`});
+    sqlDB=new SQL.Database();
+    document.getElementById('sql-st-txt').textContent='ready';
+    animBar('sql-bar',30);
+    toast('🗄️ SQL ready');
+  }catch(e){document.getElementById('sql-st-txt').textContent='error';}
+}
+
+function animBar(id,pct){
+  const el=document.getElementById(id);
+  if(el)setTimeout(()=>{el.style.width=pct+'%'},300);
+}
+
+// ══════════════════════════════════════════
+//  CELL MANAGEMENT
+// ══════════════════════════════════════════
+const gid=()=>'c'+Date.now()+'_'+Math.random().toString(36).slice(2,5);
+
+function addCell(type='python',content='',afterId=null){
+  const id=gid();
+  const cell={id,type,cm:null,execCount:null,lastTime:null,_content:content,_rendered:null,_outHTML:''};
+  if(afterId){
+    const idx=cells.findIndex(c=>c.id===afterId);
+    cells.splice(idx+1,0,cell);
+  }else{
+    cells.push(cell);
+  }
+  renderAll();
+  // mount CM after DOM
+  const el=document.getElementById(id);
+  if(el&&type!=='markdown'){
+    const ed=el.querySelector('.cell-editor');
+    if(ed)mountCM(cell,ed,content);
+  }else if(el&&type==='markdown'){
+    const ed=el.querySelector('.cell-editor');
+    if(ed)mountMD(cell,ed,content||'');
+  }
+  setActive(id);
+  setTimeout(()=>cell.cm?.focus(),60);
+  return id;
+}
+
+function mountCM(cell,container,content=''){
+  const cm=CodeMirror(container,{
+    value:content,
+    mode:cell.type==='sql'?'text/x-sql':'python',
+    lineNumbers:true,autoCloseBrackets:true,matchBrackets:true,
+    indentUnit:4,tabSize:4,indentWithTabs:false,lineWrapping:false,
+    extraKeys:{
+      'Shift-Enter':()=>runCell(cell.id),
+      'Alt-Enter':()=>{runCell(cell.id);addCell(cell.type,'',cell.id);},
+      'Tab':c=>c.execCommand('indentMore'),
+      'Shift-Tab':c=>c.execCommand('indentLess'),
+    }
+  });
+  cm.on('focus',()=>setActive(cell.id));
+  cm.on('change',()=>{cell._content=cm.getValue();});
+  cell.cm=cm;
+}
+
+function mountMD(cell,container,content=''){
+  const cm=CodeMirror(container,{
+    value:content||'# Heading\nYour notes here...',
+    mode:'markdown',lineNumbers:false,lineWrapping:true,
+    extraKeys:{'Shift-Enter':()=>renderMD(cell.id)}
+  });
+  cm.on('focus',()=>setActive(cell.id));
+  cm.on('change',()=>{cell._content=cm.getValue();});
+  cell.cm=cm;
+  if(cell._rendered){
+    container.style.display='none';
+    const vw=document.getElementById('mdv_'+cell.id);
+    if(vw){vw.innerHTML=cell._rendered;vw.style.display='block';}
+  }
+}
+
+function renderAll(){
+  const wrap=document.getElementById('cells-wrap');
+  // Save existing CMs
+  const cmMap={};
+  cells.forEach(c=>{if(c.cm)cmMap[c.id]=c.cm;});
+  wrap.innerHTML='';
+  wrap.appendChild(mkStrip(null));
+  cells.forEach(cell=>{
+    const el=mkCellEl(cell);
+    wrap.appendChild(el);
+    // mount or re-attach
+    const ed=el.querySelector('.cell-editor');
+    if(cell.cm){
+      ed.appendChild(cell.cm.getWrapperElement());
+      setTimeout(()=>cell.cm.refresh(),30);
+    }else{
+      if(cell.type!=='markdown')mountCM(cell,ed,cell._content||'');
+      else mountMD(cell,ed,cell._content||'');
+    }
+    if(cell.type==='markdown'&&cell._rendered){
+      const vw=document.getElementById('mdv_'+cell.id);
+      if(vw){vw.innerHTML=cell._rendered;vw.style.display='block';ed.style.display='none';}
+    }
+    if(cell._outHTML){
+      const o=document.getElementById('out_'+cell.id);
+      if(o){o.innerHTML=cell._outHTML;o.classList.remove('hidden');}
+    }
+    wrap.appendChild(mkStrip(cell.id));
+  });
+  updateTOC();
+}
+
+function mkCellEl(cell){
+  const el=document.createElement('div');
+  const typeClass=cell.type==='python'?'py-cell':cell.type==='sql'?'sql-cell':'md-cell';
+  el.className=`cell ${typeClass}`;
+  el.id=cell.id;
+  const label=cell.type==='python'?'Python':cell.type==='sql'?'SQL':'Text';
+  const timer=cell.lastTime?`<span class="exec-time">${cell.lastTime}</span>`:'';
+  const runBtnHtml=cell.type!=='markdown'
+    ?`<button class="run-btn" onclick="runCell('${cell.id}')" title="Run (Shift+Enter)"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>`
+    :`<button class="run-btn" onclick="renderMD('${cell.id}')" title="Render">✓</button>`;
+
+  el.innerHTML=`
+    <div class="cell-gutter">
+      ${runBtnHtml}
+      <div class="cell-num" id="ec_${cell.id}">${cell.execCount?'['+cell.execCount+']':'[ ]'}</div>
+    </div>
+    <div class="cell-toolbar">
+      <button class="ct-btn" onclick="moveCell('${cell.id}',-1)" title="Move up">↑</button>
+      <button class="ct-btn" onclick="moveCell('${cell.id}',1)" title="Move down">↓</button>
+      ${cell.type==='markdown'?`<button class="ct-btn" onclick="editMD('${cell.id}')" title="Edit">✎</button>`:''}
+      <button class="ct-btn" onclick="toggleOut('${cell.id}')" title="Toggle output">⊟</button>
+      <button class="ct-btn danger" onclick="deleteCell('${cell.id}')" title="Delete">🗑</button>
+    </div>
+    <div class="cell-badge">${label}${timer}</div>
+    <div class="cell-editor" style="${cell.type==='markdown'&&cell._rendered?'display:none':''}"></div>
+    <div class="md-view" id="mdv_${cell.id}" style="display:${cell.type==='markdown'&&cell._rendered?'block':'none'}" ondblclick="editMD('${cell.id}')"></div>
+    <div class="md-edit-hint">Double-click to edit · Shift+Enter to render</div>
+    <div class="cell-out hidden" id="out_${cell.id}"></div>
+  `;
+  el.addEventListener('click',()=>setActive(cell.id));
+  return el;
+}
+
+function mkStrip(afterId){
+  const d=document.createElement('div');d.className='add-strip';
+  d.innerHTML=`
+    <div class="add-line2"></div>
+    <button class="add-chip" onclick="addCell('python','','${afterId||''}')">+ Code</button>
+    <button class="add-chip sql" onclick="addCell('sql','','${afterId||''}')">+ SQL</button>
+    <button class="add-chip md" onclick="addCell('markdown','','${afterId||''}')">+ Text</button>
+    <div class="add-line2"></div>`;
+  return d;
+}
+
+function deleteCell(id){
+  const idx=cells.findIndex(c=>c.id===id);
+  if(idx===-1)return;
+  cells.splice(idx,1);
+  renderAll();
+  if(cells.length>0)setActive(cells[Math.min(idx,cells.length-1)].id);
+}
+
+function moveCell(id,dir){
+  const idx=cells.findIndex(c=>c.id===id);
+  const ni=idx+dir;if(ni<0||ni>=cells.length)return;
+  [cells[idx],cells[ni]]=[cells[ni],cells[idx]];
+  renderAll();setActive(id);
+}
+
+function setActive(id){
+  activeCellId=id;
+  document.querySelectorAll('.cell').forEach(e=>e.classList.remove('focused'));
+  document.getElementById(id)?.classList.add('focused');
+}
+
+function toggleOut(id){document.getElementById('out_'+id)?.classList.toggle('hidden');}
+
+function renderMD(id){
+  const cell=cells.find(c=>c.id===id);if(!cell)return;
+  const md=cell.cm.getValue();
+  cell._content=md;cell._rendered=marked.parse(md);
+  const el=document.getElementById(id);
+  const vw=document.getElementById('mdv_'+id);
+  vw.innerHTML=cell._rendered;
+  el.querySelector('.cell-editor').style.display='none';
+  vw.style.display='block';
+  el.querySelector('.md-edit-hint').style.display='block';
+}
+
+function editMD(id){
+  const cell=cells.find(c=>c.id===id);if(!cell)return;
+  const el=document.getElementById(id);
+  el.querySelector('.cell-editor').style.display='';
+  document.getElementById('mdv_'+id).style.display='none';
+  el.querySelector('.md-edit-hint').style.display='none';
+  cell.cm?.focus();
+}
+
+// ══════════════════════════════════════════
+//  EXECUTION
+// ══════════════════════════════════════════
+async function runCell(id){
+  const cell=cells.find(c=>c.id===id);
+  if(!cell)return;
+  if(cell.type==='markdown'){renderMD(id);return;}
+  const code=cell.cm.getValue().trim();if(!code)return;
+
+  const outEl=document.getElementById('out_'+id);
+  const ecEl=document.getElementById('ec_'+id);
+  const cellEl=document.getElementById(id);
+  outEl.innerHTML='';outEl.classList.remove('hidden');
+  cellEl.classList.add('running');ecEl.textContent='[*]';
+
+  const t0=Date.now();execN++;totalExec++;
+  try{
+    if(cell.type==='python')await execPy(code,outEl);
+    else execSQL2(code,outEl);
+  }catch(e){appendOut(outEl,e.message,'stderr');}
+
+  const elapsed=((Date.now()-t0)/1000).toFixed(2)+'s';
+  cell.lastTime=elapsed;cell.execCount=execN;cell._outHTML=outEl.innerHTML;
+  cellEl.classList.remove('running');
+  ecEl.textContent='['+execN+']';
+  // Update timer in badge
+  const badge=cellEl.querySelector('.cell-badge');
+  if(badge){const label=cell.type==='python'?'Python':cell.type==='sql'?'SQL':'Text';badge.innerHTML=label+`<span class="exec-time">${elapsed}</span>`;}
+  refreshVars();
+}
+
+async function execPy(code,outEl){
+  if(!pyodide){appendOut(outEl,'Python not ready','stderr');return;}
+  await pyodide.runPythonAsync(`
+import sys,io as _io
+_buf=_io.StringIO()
+sys.stdout=_buf;sys.stderr=_buf
+_ok=True;_err=""
+try:
+    exec(${JSON.stringify(code)},globals())
+except Exception as _e:
+    _ok=False;_err=repr(_e)
+finally:
+    sys.stdout=sys.__stdout__;sys.stderr=sys.__stderr__
+`);
+  const raw=pyodide.globals.get('_buf').getvalue();
+  const ok=pyodide.globals.get('_ok');
+  const err=pyodide.globals.get('_err');
+  const lines=raw.split('\n');
+  for(let i=0;i<lines.length;i++){
+    const l=lines[i];
+    if(i===lines.length-1&&!l)continue;
+    if(l.startsWith('__CHART__:')){
+      try{renderChart2(JSON.parse(l.slice(10)),outEl);}catch{}
+    }else{appendOut(outEl,l,'stdout');}
+  }
+  if(!ok)appendOut(outEl,'⚠ '+err,'stderr');
+  if(!raw&&ok)appendOut(outEl,'✓ Executed successfully','info');
+}
+
+function execSQL2(code,outEl){
+  if(!sqlDB){appendOut(outEl,'SQL not ready','stderr');return;}
+  const stmts=code.split(';').map(s=>s.trim()).filter(Boolean);
+  for(const stmt of stmts){
+    try{
+      const res=sqlDB.exec(stmt);
+      if(res.length>0){
+        res.forEach(r=>{
+          const w=document.createElement('div');w.className='tbl-out';
+          w.appendChild(buildTable2(r));outEl.appendChild(w);
+          const m=document.createElement('div');m.className='tbl-meta2';
+          m.innerHTML=`<span>${r.values.length} row${r.values.length!==1?'s':''}</span>
+            <button class="exp-btn" onclick='exportCSV2(${JSON.stringify(r)})'>⬇ Export CSV</button>`;
+          outEl.appendChild(m);
+        });
+      }else{appendOut(outEl,'✓ '+sqlSum(stmt),'info');}
+    }catch(e){appendOut(outEl,'⚠ '+e.message,'stderr');}
+  }
+}
+
+function buildTable2(r){
+  const t=document.createElement('table');t.className='sql-tbl';
+  const th=document.createElement('thead'),hr=document.createElement('tr');
+  r.columns.forEach(c=>{const d=document.createElement('th');d.textContent=c;hr.appendChild(d);});
+  th.appendChild(hr);t.appendChild(th);
+  const tb=document.createElement('tbody');
+  r.values.forEach(row=>{
+    const tr=document.createElement('tr');
+    row.forEach(v=>{const td=document.createElement('td');td.textContent=v===null?'NULL':v;tr.appendChild(td);});
+    tb.appendChild(tr);
+  });
+  t.appendChild(tb);return t;
+}
+
+function sqlSum(s){
+  s=s.toUpperCase().trim();
+  if(s.startsWith('CREATE'))return'Table created';if(s.startsWith('INSERT'))return'Row(s) inserted';
+  if(s.startsWith('UPDATE'))return'Row(s) updated';if(s.startsWith('DELETE'))return'Row(s) deleted';
+  if(s.startsWith('DROP'))return'Table dropped';return'OK';
+}
+
+function appendOut(outEl,text,type){
+  const d=document.createElement('div');d.className='out-line '+type;d.textContent=text;outEl.appendChild(d);
+}
+
+// ══════════════════════════════════════════
+//  CHARTS
+// ══════════════════════════════════════════
+const CC=['#1a73e8','#34a853','#ea4335','#fbbc04','#8430ce','#0f9d58','#e37400','#4285f4'];
+function renderChart2(data,outEl){
+  const wrap=document.createElement('div');wrap.className='chart-out';
+  const title=document.createElement('div');title.className='chart-title2';title.textContent=data.title||'';
+  wrap.appendChild(title);
+  const canvas=document.createElement('canvas');wrap.appendChild(canvas);outEl.appendChild(wrap);
+  let cfg;
+  if(data.type==='scatter'){
+    cfg={type:'scatter',data:{datasets:[{label:data.title,data:data.x.map((x,i)=>({x,y:data.y[i]})),
+      backgroundColor:CC[0]+'80',borderColor:CC[0],pointRadius:5}]},
+      options:{responsive:true,plugins:{legend:{display:false}},
+        scales:{x:{title:{display:!!data.xlabel,text:data.xlabel},grid:{color:'#e0e0e0'},ticks:{color:'#5f6368'}},
+          y:{title:{display:!!data.ylabel,text:data.ylabel},grid:{color:'#e0e0e0'},ticks:{color:'#5f6368'}}}}};
+  }else if(data.type==='pie'){
+    cfg={type:'pie',data:{labels:data.labels,datasets:[{data:data.values,backgroundColor:CC}]},
+      options:{responsive:true,plugins:{legend:{position:'right',labels:{color:'#5f6368',font:{size:11}}}}}};
+  }else{
+    cfg={type:data.type,
+      data:{labels:data.labels,datasets:[{label:data.title||'',data:data.values,
+        backgroundColor:data.type==='line'?CC[0]+'20':CC[0]+'cc',
+        borderColor:CC[0],borderWidth:2,fill:data.type==='line',tension:.35,pointRadius:3,pointBackgroundColor:CC[0]}]},
+      options:{responsive:true,plugins:{legend:{display:false}},
+        scales:{x:{title:{display:!!data.xlabel,text:data.xlabel,color:'#5f6368'},grid:{color:'#e0e0e0'},ticks:{color:'#5f6368'}},
+          y:{title:{display:!!data.ylabel,text:data.ylabel,color:'#5f6368'},grid:{color:'#e0e0e0'},ticks:{color:'#5f6368'}}}}};
+  }
+  new Chart(canvas,cfg);
+}
+
+// ══════════════════════════════════════════
+//  RUN ALL / CLEAR
+// ══════════════════════════════════════════
+async function runAll(){
+  for(const c of cells)await runCell(c.id);
+}
+
+function clearOutputs(){
+  cells.forEach(c=>{
+    const o=document.getElementById('out_'+c.id);
+    if(o){o.innerHTML='';o.classList.add('hidden');}
+    c._outHTML='';c.execCount=null;c.lastTime=null;
+    const ec=document.getElementById('ec_'+c.id);
+    if(ec)ec.textContent='[ ]';
+    const badge=document.getElementById(c.id)?.querySelector('.cell-badge');
+    if(badge){const l=c.type==='python'?'Python':c.type==='sql'?'SQL':'Text';badge.innerHTML=l;}
+  });
+  execN=0;totalExec=0;toast('Outputs cleared');
+}
+
+// ══════════════════════════════════════════
+//  VARIABLE EXPLORER
+// ══════════════════════════════════════════
+async function refreshVars(){
+  if(!pyodide)return;
+  try{
+    await pyodide.runPythonAsync(`
+import json as _jv,builtins as _b
+_skip={*dir(_b),'__builtins__','_buf','_ok','_err','_skip','_jv','_b',
+  'bar_chart','line_chart','pie_chart','scatter_chart'}
+_vout={}
+for _k,_v in list(globals().items()):
+    if _k.startswith('_') or _k in _skip: continue
+    try: _vout[_k]={"type":type(_v).__name__,"val":str(_v)[:80]}
+    except: pass
+`);
+    const vmap=pyodide.globals.get('_vout').toJs({dict_converter:Object.fromEntries});
+    const renderVars=(listId)=>{
+      const list=document.getElementById(listId);if(!list)return;
+      if(Object.keys(vmap).length===0){list.innerHTML='<div style="padding:12px 16px;font-size:.8rem;color:var(--text3)">No variables yet</div>';return;}
+      list.innerHTML='';
+      Object.entries(vmap).forEach(([k,v])=>{
+        const row=document.createElement('div');row.className='var-row';
+        row.innerHTML=`<span class="var-name">${k}</span><span class="var-type">${v.type}</span><span class="var-val" title="${v.val}">${v.val}</span>`;
+        list.appendChild(row);
+      });
+    };
+    renderVars('vars-list');
+    renderVars('vars2-list');
+  }catch{}
+}
+
+// ══════════════════════════════════════════
+//  CSV UPLOAD
+// ══════════════════════════════════════════
+function handleDrop(e){e.preventDefault();processFile(e.dataTransfer.files[0]);}
+function handleFileSelect(e){processFile(e.target.files[0]);}
+
+function processFile(file){
+  if(!file)return;
+  csvName=file.name.replace(/\.[^.]+$/,'').replace(/[^a-zA-Z0-9_]/g,'_');
+  const sep=file.name.endsWith('.tsv')?'\t':',';
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const rows=e.target.result.trim().split('\n').map(r=>parseRow(r,sep));
+    csvData={headers:rows[0],rows:rows.slice(1)};
+    const prev=document.getElementById('modal-preview');
+    prev.style.display='block';
+    prev.textContent=`Columns: ${rows[0].join(', ')}\nRows: ${rows.length-1}\nPreview: ${rows.slice(1,3).map(r=>r.join(', ')).join(' | ')}`;
+    document.getElementById('import-btn').disabled=false;
+    toast(`Parsed: ${rows.length-1} rows × ${rows[0].length} cols`);
+  };
+  reader.readAsText(file);
+}
+
+function parseRow(row,sep){
+  const result=[];let cur='',inQ=false;
+  for(let i=0;i<row.length;i++){
+    if(row[i]==='"')inQ=!inQ;
+    else if(row[i]===sep&&!inQ){result.push(cur.trim());cur='';}
+    else cur+=row[i];
+  }
+  result.push(cur.trim());return result;
+}
+
+async function importFile(){
+  if(!csvData)return;
+  document.getElementById('upload-modal').classList.remove('show');
+  const wantPy=document.getElementById('opt-py2').classList.contains('sel');
+  const wantSQL=document.getElementById('opt-sql2').classList.contains('sel');
+
+  if(wantPy&&pyodide){
+    const pdata=JSON.stringify(csvData.rows.map(r=>{const o={};csvData.headers.forEach((h,i)=>{o[h]=r[i]||'';});return o;}));
+    await pyodide.runPythonAsync(`import json as _jj\n${csvName}=_jj.loads(${JSON.stringify(pdata)})\nprint(f"✓ Loaded '${csvName}': {len(${csvName})} rows, columns: {list(${csvName}[0].keys()) if ${csvName} else []}")`);
+    const id=addCell('python',`# Explore ${csvName}\nprint("Rows:", len(${csvName}))\nprint("Columns:", list(${csvName}[0].keys()))\nprint("\\nFirst 3 rows:")\nfor row in ${csvName}[:3]:\n    print(row)`);
+    await runCell(id);
+  }
+  if(wantSQL&&sqlDB){
+    try{
+      sqlDB.run(`DROP TABLE IF EXISTS ${csvName};`);
+      sqlDB.run(`CREATE TABLE ${csvName} (${csvData.headers.map(c=>`"${c}" TEXT`).join(',')});`);
+      csvData.rows.forEach(r=>sqlDB.run(`INSERT INTO ${csvName} VALUES (${csvData.headers.map(()=>'?').join(',')})`,r));
+      const id=addCell('sql',`-- Explore ${csvName}\nSELECT * FROM ${csvName} LIMIT 10;`);
+      await runCell(id);
+      toast(`✓ SQL table '${csvName}' created`);
+    }catch(e){toast('SQL import error: '+e.message);}
+  }
+  refreshVars();
+}
+
+function exportCSV2(result){
+  const csv=[result.columns.join(','),...result.values.map(r=>r.map(v=>v===null?'':'"'+String(v).replace(/"/g,'""')+'"').join(','))].join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='export.csv';a.click();
+  toast('CSV exported ✓');
+}
+
+// ══════════════════════════════════════════
+//  SIDE PANEL
+// ══════════════════════════════════════════
+let activeSP=null;
+function openSidePanel(id){
+  if(activeSP===id){closeSidePanel();return;}
+  activeSP=id;
+  document.getElementById('side-panel').classList.add('open');
+  document.querySelectorAll('[id^="sp-"]').forEach(p=>{p.style.display='none';});
+  const p=document.getElementById('sp-'+id);
+  if(p)p.style.display='flex';
+}
+function closeSidePanel(){
+  activeSP=null;
+  document.getElementById('side-panel').classList.remove('open');
+}
+
+// ══════════════════════════════════════════
+//  BOTTOM PANEL
+// ══════════════════════════════════════════
+function switchBTab(id,el){
+  document.querySelectorAll('.btab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('ai-panel').classList.remove('active');
+  document.getElementById('term-panel').style.display='none';
+  document.getElementById('vars2-panel').style.display='none';
+  document.getElementById('ai-panel').style.display='none';
+  if(id==='ai'){document.getElementById('ai-panel').style.display='flex';document.getElementById('ai-panel').classList.add('active');}
+  else if(id==='term'){document.getElementById('term-panel').style.display='block';}
+  else if(id==='vars2'){document.getElementById('vars2-panel').style.display='block';refreshVars();}
+}
+
+function toggleBottomPanel(){
+  const ba=document.getElementById('bottom-area');
+  bottomMinimised=!bottomMinimised;
+  ba.style.height=bottomMinimised?'36px':bphDefault+'px';
+  document.getElementById('bottom-content').style.display=bottomMinimised?'none':'flex';
+  document.querySelector('.btab-action').textContent=bottomMinimised?'▴ Expand':'▾ Minimise';
+}
+
+function toggleAI(){
+  const ba=document.getElementById('bottom-area');
+  if(bottomMinimised){bottomMinimised=false;ba.style.height=bphDefault+'px';document.getElementById('bottom-content').style.display='flex';document.querySelector('.btab-action').textContent='▾ Minimise';}
+  switchBTab('ai',document.getElementById('btab-ai'));
+  document.getElementById('ai-input').focus();
+}
+
+// Resize
+(function(){
+  const rh=document.getElementById('resize-handle');
+  const ba=document.getElementById('bottom-area');
+  if(!rh)return;
+  let dragging=false,startY,startH;
+  rh.addEventListener('mousedown',e=>{dragging=true;startY=e.clientY;startH=ba.offsetHeight;e.preventDefault();});
+  document.addEventListener('mousemove',e=>{
+    if(!dragging)return;
+    const dh=startY-e.clientY;
+    const nh=Math.max(80,Math.min(600,startH+dh));
+    ba.style.height=nh+'px';bphDefault=nh;
+    document.getElementById('bottom-content').style.display='flex';bottomMinimised=false;
+  });
+  document.addEventListener('mouseup',()=>{dragging=false;});
+})();
+
+// ══════════════════════════════════════════
+//  AI ASSISTANT
+// ══════════════════════════════════════════
+function aiKeydown(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendAIMsg();}}
+
+async function sendAIMsg(){
+  const inp=document.getElementById('ai-input');
+  const msg=inp.value.trim();if(!msg)return;
+  inp.value='';
+  appendAIBubble(msg,'user');
+  aiHistory.push({role:'user',content:msg});
+  await callAI();
+}
+
+async function askAI(msg){
+  appendAIBubble(msg,'user');
+  aiHistory.push({role:'user',content:msg});
+  await callAI();
+}
+
+async function sendCellCtx(){
+  const cell=cells.find(c=>c.id===activeCellId);
+  if(!cell||!cell.cm){toast('Select a code cell first');return;}
+  const code=cell.cm.getValue();
+  const msg=`Explain this ${cell.type} code step by step:\n\`\`\`${cell.type}\n${code}\n\`\`\``;
+  appendAIBubble('📋 Asking about current cell...','user');
+  aiHistory.push({role:'user',content:msg});
+  await callAI();
+}
+
+function appendAIBubble(text,role){
+  const msgs=document.getElementById('ai-msgs');
+  const d=document.createElement('div');d.className='ai-bubble '+role;
+  d.innerHTML=role==='bot'?fmtAI(text):esc(text);
+  msgs.appendChild(d);msgs.scrollTop=msgs.scrollHeight;return d;
+}
+
+function fmtAI(t){
+  return t
+    .replace(/```(\w*)\n?([\s\S]*?)```/g,(_,lang,c)=>`<pre style="background:var(--bg3);border-radius:6px;padding:8px;margin:4px 0;overflow-x:auto;font-family:var(--font-mono);font-size:.78rem">${esc(c.trim())}</pre>`)
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\n/g,'<br>');
+}
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+async function callAI(){
+  const send=document.getElementById('ai-send-btn');send.disabled=true;
+  const thinking=appendAIBubble('Thinking...','thinking');
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',max_tokens:1000,
+        system:`You are a friendly, expert AI tutor for Python, SQL, and Data Engineering. The student is a beginner learning to become a data engineer. Be encouraging, use analogies, keep it concise, use code examples in backticks. Never give overly long responses.`,
+        messages:aiHistory.slice(-12)
+      })
+    });
+    const data=await res.json();
+    const reply=data.content?.map(b=>b.text||'').join('\n')||'Sorry, I had trouble responding.';
+    thinking.remove();appendAIBubble(reply,'bot');
+    aiHistory.push({role:'assistant',content:reply});
+  }catch{thinking.remove();appendAIBubble('Connection error. Make sure you have internet access.','bot');}
+  send.disabled=false;
+}
+
+// ══════════════════════════════════════════
+//  EXERCISES
+// ══════════════════════════════════════════
+const exercises2=[
+  {id:'e1',title:'Variables & Types',diff:'easy',type:'python',
+   desc:'Create 3 variables: your name (string), age (integer), GPA (float). Print each one.',
+   hints:['name = "Alice"  # string','age = 25  # integer','gpa = 3.7  # float'],
+   starter:'# Create your variables\n\n# Print them'},
+  {id:'e2',title:'Calculate Average',diff:'easy',type:'python',
+   desc:'Scores: Math=85, English=72, Science=91. Calculate and print total and average.',
+   hints:['math = 85','total = math + english + science','average = total / 3'],
+   starter:'math = 85\nenglish = 72\nscience = 91\n# Calculate below'},
+  {id:'e3',title:'Loop Through a List',diff:'easy',type:'python',
+   desc:'Create a list of 4 student names. Loop through and print "Hello, {name}" for each.',
+   hints:['names = ["Rose","John","Mary","Ali"]','for name in names:','    print("Hello,", name)'],
+   starter:'# Your list here\n\n# Your loop here'},
+  {id:'e4',title:'Grade Function',diff:'med',type:'python',
+   desc:'Write get_grade(score) returning "A" (90+), "B" (80+), "C" (70+), "F" otherwise.',
+   hints:['def get_grade(score):','    if score >= 90: return "A"','Test: print(get_grade(95))'],
+   starter:'def get_grade(score):\n    pass  # Your code here\n\nprint(get_grade(95))\nprint(get_grade(72))'},
+  {id:'e5',title:'CREATE & INSERT SQL',diff:'easy',type:'sql',
+   desc:'Create a "products" table (id INTEGER, name TEXT, price REAL). Insert 3 products, then SELECT all.',
+   hints:['CREATE TABLE products (id INTEGER PRIMARY KEY, name TEXT, price REAL);','INSERT INTO products VALUES (1,"Laptop",999.99);','SELECT * FROM products;'],
+   starter:'-- Create table\n\n-- Insert 3 products\n\n-- Select all'},
+  {id:'e6',title:'WHERE Filter',diff:'easy',type:'sql',
+   desc:'Query the students table to find students with marks > 80, ordered by marks descending.',
+   hints:['SELECT * FROM students','WHERE marks > 80','ORDER BY marks DESC;'],
+   starter:'SELECT * FROM students\nWHERE marks > 80\nORDER BY marks DESC;'},
+  {id:'e7',title:'Bar Chart',diff:'med',type:'python',
+   desc:'Create a list of 4 students and marks. Use bar_chart() to visualise.',
+   hints:['students = ["Rose","John","Mary","Ali"]','marks = [90, 75, 88, 65]','bar_chart(students, marks, "Student Marks", "Student", "Score")'],
+   starter:'students = ["Rose", "John", "Mary", "Ali"]\nmarks = [90, 75, 88, 65]\n\n# Call bar_chart here'},
+];
+let exState2={};
+
+function buildExercises2(){
+  const list=document.getElementById('ex-list2');
+  exercises2.forEach((ex,i)=>{
+    exState2[ex.id]={open:false,hint:0,done:false};
+    const d=document.createElement('div');d.className='ex-item';
+    d.innerHTML=`
+      <div class="ex-item-head" onclick="toggleEx2('${ex.id}')">
+        <div class="ex-num" id="en_${ex.id}">${i+1}</div>
+        <div class="ex-title2">${ex.title}</div>
+        <div class="ex-diff ${ex.diff}">${ex.diff}</div>
+      </div>
+      <div id="exb2_${ex.id}" style="display:none">
+        <div class="ex-desc2">${ex.desc}</div>
+        <div class="hint-txt" id="ht_${ex.id}"></div>
+        <div class="ex-btns">
+          <button class="ex-btn2 primary" onclick="startEx2('${ex.id}')">▶ Start</button>
+          <button class="ex-btn2" onclick="showHint2('${ex.id}')">💡 Hint</button>
+          <button class="ex-btn2" onclick="doneEx2('${ex.id}')">✓ Done</button>
+        </div>
+      </div>`;
+    list.appendChild(d);
+  });
+}
+
+function toggleEx2(id){
+  const st=exState2[id];st.open=!st.open;
+  document.getElementById('exb2_'+id).style.display=st.open?'block':'none';
+}
+function startEx2(id){
+  const ex=exercises2.find(e=>e.id===id);if(!ex)return;
+  addCell(ex.type,ex.starter);toast(`Exercise "${ex.title}" added ✓`);
+}
+function showHint2(id){
+  const ex=exercises2.find(e=>e.id===id);const st=exState2[id];
+  const box=document.getElementById('ht_'+id);
+  if(st.hint>=ex.hints.length){box.textContent='No more hints! You got this! 💪';box.classList.add('show');return;}
+  box.textContent='💡 Hint '+(st.hint+1)+': '+ex.hints[st.hint];
+  box.classList.add('show');st.hint++;
+}
+function doneEx2(id){
+  exState2[id].done=true;
+  document.getElementById('en_'+id).classList.add('done');
+  toast('Exercise complete! 🎉');
+}
+
+// ══════════════════════════════════════════
+//  SNIPPETS
+// ══════════════════════════════════════════
+const snippets2={
+  'py-vars':`# Data Types in Python
+name = "Rose"
+age = 20
+marks = 95.5
+is_student = True
+
+print("Name:", name, "| Type:", type(name).__name__)
+print("Age:", age, "| Type:", type(age).__name__)
+print("Marks:", marks, "| Type:", type(marks).__name__)`,
+  'py-list':`# Lists and For Loops
+students = ["Rose", "John", "Mary", "Ali"]
+marks = [95, 78, 88, 72]
+
+for i in range(len(students)):
+    grade = "A" if marks[i] >= 80 else "B" if marks[i] >= 70 else "C"
+    print(f"{students[i]:<10} → {marks[i]}  ({grade})")
+
+print(f"\\nClass Average: {sum(marks)/len(marks):.1f}")`,
+  'py-dict':`# Dictionaries
+student = {
+    "name": "Rose",
+    "marks": {"Math": 95, "English": 88, "Science": 91}
+}
+for subject, score in student["marks"].items():
+    print(f"  {subject}: {score}")
+print("Average:", sum(student["marks"].values())/3)`,
+  'py-func':`def get_grade(avg):
+    if avg >= 90: return "A+"
+    elif avg >= 80: return "A"
+    elif avg >= 70: return "B"
+    return "F"
+
+def report(name, math, english, science):
+    avg = (math + english + science) / 3
+    print(f"{name}: avg={avg:.1f}, grade={get_grade(avg)}")
+
+report("Rose", 95, 88, 91)
+report("John", 72, 65, 78)`,
+  'py-grade':`data = [
+    {"name":"Rose","math":95,"english":88,"science":91},
+    {"name":"John","math":72,"english":65,"science":78},
+    {"name":"Mary","math":88,"english":92,"science":85},
+]
+def grade(avg):
+    return "A+" if avg>=90 else "A" if avg>=80 else "B" if avg>=70 else "F"
+
+print(f"{'Name':<10}{'Avg':<8}Grade")
+print("-"*22)
+for s in data:
+    avg=(s["math"]+s["english"]+s["science"])/3
+    print(f"{s['name']:<10}{avg:<8.1f}{grade(avg)}")`,
+  'py-chart-bar':`students = ["Rose", "John", "Mary", "Ali"]
+marks = [95, 78, 88, 72]
+bar_chart(students, marks, "Student Marks", "Student", "Score")`,
+  'py-chart-line':`months = ["Jan","Feb","Mar","Apr","May","Jun"]
+sales = [1200, 1350, 1100, 1800, 1650, 2100]
+line_chart(months, sales, "Monthly Sales", "Month", "Sales")`,
+  'py-csv':`# After uploading a CSV, explore it here
+# Replace 'data' with your variable name
+if 'data' in dir():
+    print("Rows:", len(data))
+    print("Columns:", list(data[0].keys()))
+    for row in data[:3]: print(row)`,
+  'sql-create':`CREATE TABLE IF NOT EXISTS students (
+    id      INTEGER PRIMARY KEY,
+    name    TEXT NOT NULL,
+    class   TEXT,
+    marks   INTEGER,
+    average REAL
+);`,
+  'sql-insert':`INSERT INTO students (name, class, marks, average) VALUES
+    ('Rose',  'Data Engineering', 90, 80.8),
+    ('John',  'Data Engineering', 85, 76.5),
+    ('Mary',  'Data Science',     92, 88.0),
+    ('Ali',   'Data Science',     70, 65.3);`,
+  'sql-select':`SELECT * FROM students;`,
+  'sql-where':`SELECT name, marks FROM students
+WHERE marks >= 85
+ORDER BY marks DESC;`,
+  'sql-aggr':`SELECT class, COUNT(*) AS students, AVG(marks) AS avg_marks
+FROM students
+GROUP BY class;`,
+  'sql-join':`CREATE TABLE IF NOT EXISTS grades (
+    student_id INTEGER, subject TEXT, score INTEGER
+);
+INSERT INTO grades VALUES (1,'Math',95),(1,'English',88),(2,'Math',78);
+
+SELECT s.name, g.subject, g.score
+FROM students s JOIN grades g ON s.id=g.student_id;`,
+};
+
+function insertSnip(key){
+  const content=snippets2[key];if(!content)return;
+  const type=key.startsWith('sql')?'sql':'python';
+  addCell(type,content,activeCellId);
+  toast('Snippet inserted ✓');
+  closeSidePanel();
+}
+
+// ══════════════════════════════════════════
+//  TOC
+// ══════════════════════════════════════════
+function updateTOC(){
+  const list=document.getElementById('toc-list');if(!list)return;
+  list.innerHTML='';
+  cells.forEach((c,i)=>{
+    if(c.type==='markdown'&&c._rendered){
+      const tmp=document.createElement('div');tmp.innerHTML=c._rendered;
+      tmp.querySelectorAll('h1,h2,h3').forEach(h=>{
+        const d=document.createElement('div');d.className='panel-item';
+        d.style.paddingLeft=(parseInt(h.tagName[1])*12)+'px';
+        d.textContent=h.textContent;
+        d.onclick=()=>document.getElementById(c.id)?.scrollIntoView({behavior:'smooth'});
+        list.appendChild(d);
+      });
+    }else{
+      const d=document.createElement('div');d.className='panel-item';
+      d.textContent=`[${i+1}] ${c.type==='python'?'Python':c.type==='sql'?'SQL':'Text'} cell`;
+      d.onclick=()=>document.getElementById(c.id)?.scrollIntoView({behavior:'smooth'});
+      list.appendChild(d);
+    }
+  });
+}
+
+// ══════════════════════════════════════════
+//  SAVE / LOAD
+// ══════════════════════════════════════════
+function saveNotebook(){
+  const data={
+    title:document.getElementById('nb-title').value,
+    cells:cells.map(c=>({type:c.type,content:c.cm?c.cm.getValue():(c._content||''),rendered:c._rendered||null}))
+  };
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(data,null,2)],{type:'application/json'}));
+  a.download=(data.title||'notebook').replace(/\s/g,'_')+'.json';a.click();
+  toast('Notebook saved ✓');
+}
+
+function loadNotebook(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      document.getElementById('nb-title').value=data.title||'Untitled';
+      cells=[];
+      data.cells?.forEach(c=>{
+        const id=gid();
+        cells.push({id,type:c.type,cm:null,_content:c.content,_rendered:c.rendered||null,execCount:null,lastTime:null,_outHTML:''});
+      });
+      renderAll();toast('Notebook loaded ✓');
+    }catch{toast('Error loading file');}
+  };
+  reader.readAsText(file);event.target.value='';
+}
+
+// ══════════════════════════════════════════
+//  UTILS
+// ══════════════════════════════════════════
+let _tt2;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg;el.classList.add('show');
+  clearTimeout(_tt2);_tt2=setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown',e=>{
+  if(e.ctrlKey||e.metaKey){
+    if(e.key==='b'){e.preventDefault();addCell('python','',activeCellId);}
+    if(e.key==='q'){e.preventDefault();addCell('sql','',activeCellId);}
+    if(e.key==='m'){e.preventDefault();addCell('markdown','',activeCellId);}
+    if(e.key==='k'){e.preventDefault();toggleAI();}
+    if(e.key==='s'){e.preventDefault();saveNotebook();}
+    if(e.key==='Delete'){if(activeCellId)deleteCell(activeCellId);}
+  }
+});
+
+// ══════════════════════════════════════════
+//  BOOT
+// ══════════════════════════════════════════
+(async()=>{
+  buildExercises2();
+
+  // Welcome cells
+  [{type:'markdown',content:`# 📓 Welcome to DataColab
+
+Your **Python + SQL** notebook — built for learning Data Engineering from scratch.
+
+**Quick start:** Click any cell and press **Shift+Enter** to run it. Use **+ Code** or **+ Text** buttons to add cells.
+
+> 💡 Open the **AI Tutor** panel below to ask questions anytime!`},
+   {type:'python',content:`# Grade Tracker — your first Python program
+students = ["Rose", "John", "Mary", "Ali"]
+marks    = [90, 78, 92, 65]
+
+for i in range(len(students)):
+    grade = "A" if marks[i] >= 80 else "B" if marks[i] >= 70 else "C"
+    print(f"{students[i]:<10} → {marks[i]}  Grade: {grade}")
+
+print(f"\\nClass Average: {sum(marks)/len(marks):.1f}")`},
+   {type:'python',content:`# Visualise the marks
+students = ["Rose", "John", "Mary", "Ali"]
+marks    = [90, 78, 92, 65]
+
+bar_chart(students, marks, "Student Marks", "Student", "Score")`},
+   {type:'sql',content:`-- Create and query a student database
+CREATE TABLE IF NOT EXISTS students (
+    id INTEGER PRIMARY KEY, name TEXT, marks INTEGER, class TEXT
+);
+INSERT OR IGNORE INTO students VALUES
+    (1,'Rose',  90,'Data Engineering'),
+    (2,'John',  78,'Data Engineering'),
+    (3,'Mary',  92,'Data Science'),
+    (4,'Ali',   65,'Data Science');
+
+SELECT class, COUNT(*) AS students, AVG(marks) AS avg_marks
+FROM students GROUP BY class;`}
+  ].forEach(c=>{
+    const id=gid();
+    cells.push({id,type:c.type,cm:null,_content:c.content,_rendered:null,execCount:null,lastTime:null,_outHTML:''});
+  });
+
+  renderAll();
+  await Promise.all([initPython(),initSQL()]);
+})();
+</script>
+</body>
+</html>
